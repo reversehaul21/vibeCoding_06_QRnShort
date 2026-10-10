@@ -1,0 +1,795 @@
+/* ========================================================
+   URL2QR - 스마트 QR 코드 생성기 스타일시트
+   ======================================================== */
+
+:root {
+  --primary-yellow: #f8b803;
+  --primary-yellow-hover: #e6a700;
+  --primary-yellow-light: #fff8e1;
+  --primary-yellow-glow: rgba(248, 184, 3, 0.28);
+  
+  --bg-gradient-start: #0f1219;
+  --bg-gradient-end: #181c26;
+  
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45);
+  
+  --input-bg: rgba(18, 22, 33, 0.85);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --input-border-focus: #f8b803;
+  
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+  
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  
+  --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', sans-serif;
+  --transition-smooth: 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 초기화 & 기본 설정 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-gradient-start);
+  background: radial-gradient(circle at 50% 15%, #1e2433 0%, #0e1118 70%);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 앰비언트 글로우 & 배경 장식 */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-1 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(248, 184, 3, 0.14) 0%, transparent 70%);
+  top: -100px;
+  left: 20%;
+}
+.glow-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%);
+  bottom: -100px;
+  right: 15%;
+}
+
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 전체 앱 레이아웃 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* 1. 상단 헤더 (좌측 상단 로고) */
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  padding: 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.logo-wrapper:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.logo-wrapper img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.logo-subtext {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-yellow);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  background: rgba(248, 184, 3, 0.12);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 184, 3, 0.25);
+}
+
+.tag-badge {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+}
+
+/* 메인 컨텐츠 영역 */
+.main-content {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 3. QR 코드 디스플레이 영역 (화면 정중앙 배치) */
+.qr-display-section {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: 
+    transform var(--transition-smooth),
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.5s;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 생성 완료 후 활성화 클래스 */
+.qr-display-section.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.qr-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(22, 27, 39, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 30px 60px -15px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(248, 184, 3, 0.08),
+    0 0 40px -10px var(--primary-yellow-glow);
+  border-radius: 28px;
+  padding: 32px 36px;
+  text-align: center;
+  max-width: 420px;
+  width: 90vw;
+}
+
+.qr-hint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 16px;
+  border-radius: 999px;
+  margin-bottom: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.qr-hint-badge strong {
+  color: var(--primary-yellow);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary-yellow);
+  box-shadow: 0 0 8px var(--primary-yellow);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+/* 4. 클릭 가능한 QR 코드 박스 */
+.qr-box {
+  position: relative;
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 20px;
+  box-shadow: 
+    0 12px 28px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.qr-box:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 3px var(--primary-yellow);
+}
+
+.qr-box:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* QRCode 캔버스 & 이미지 */
+#qrcodeCanvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 230px;
+  height: 230px;
+}
+
+#qrcodeCanvas canvas,
+#qrcodeCanvas img {
+  display: block;
+  width: 230px !important;
+  height: 230px !important;
+  border-radius: 6px;
+}
+
+/* 호버 시 나타나는 세련된 오버레이 */
+.qr-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 18, 25, 0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  transform: scale(0.96);
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.qr-box:hover .qr-hover-overlay {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.download-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary-yellow);
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 14px rgba(248, 184, 3, 0.45);
+  animation: bounceDown 1.5s infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+.overlay-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.overlay-sub {
+  font-size: 12px;
+  color: var(--primary-yellow);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* QR 대상 URL 표시 */
+.qr-meta-info {
+  margin-top: 18px;
+  width: 100%;
+}
+
+.target-url-label {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 보조 액션 버튼들 */
+.qr-action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  width: 100%;
+}
+
+.action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  border: 1px solid transparent;
+}
+
+.action-btn.primary {
+  background: var(--primary-yellow);
+  color: #111827;
+  box-shadow: 0 6px 18px -4px rgba(248, 184, 3, 0.4);
+}
+
+.action-btn.primary:hover {
+  background: var(--primary-yellow-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px -4px rgba(248, 184, 3, 0.55);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* ========================================================
+   2. URL 입력 섹션 (중앙 ↔ 하단 이동 애니메이션 핵심)
+   ======================================================== */
+
+.url-input-section {
+  position: absolute;
+  left: 50%;
+  width: 90%;
+  max-width: 680px;
+  z-index: 30;
+  transition: 
+    top var(--transition-smooth),
+    bottom var(--transition-smooth),
+    transform var(--transition-smooth),
+    max-width var(--transition-smooth);
+}
+
+/* 초기 상태: 화면 정중앙 */
+.url-input-section.pos-center {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 확인 후 상태: 화면 하단으로 내려감 */
+.url-input-section.pos-bottom {
+  top: calc(100% - 94px);
+  transform: translate(-50%, 0);
+  max-width: 620px;
+}
+
+.input-card {
+  background: rgba(21, 26, 38, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 26px;
+  padding: 36px 36px;
+  box-shadow: 
+    0 32px 64px -16px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: 
+    padding var(--transition-smooth),
+    background var(--transition-smooth),
+    box-shadow var(--transition-smooth);
+}
+
+/* 하단으로 이동 시 카드 컴팩트화 */
+.url-input-section.pos-bottom .input-card {
+  padding: 14px 20px;
+  border-radius: 22px;
+  box-shadow: 
+    0 16px 36px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(248, 184, 3, 0.15);
+  border-color: rgba(248, 184, 3, 0.35);
+}
+
+/* 히어로 인트로 텍스트 */
+.hero-intro {
+  text-align: center;
+  margin-bottom: 28px;
+  transition: 
+    max-height var(--transition-smooth),
+    opacity 0.4s ease,
+    margin var(--transition-smooth);
+  overflow: hidden;
+  max-height: 200px;
+  opacity: 1;
+}
+
+.hero-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.hero-title .highlight {
+  color: var(--primary-yellow);
+  position: relative;
+  display: inline-block;
+}
+
+.hero-title .highlight::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 100%;
+  height: 6px;
+  background: rgba(248, 184, 3, 0.25);
+  border-radius: 4px;
+  z-index: -1;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* 하단으로 내려갔을 때 히어로 숨김 */
+.url-input-section.pos-bottom .hero-intro {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+/* URL 입력 폼 */
+.url-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.input-group {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.url-input {
+  width: 100%;
+  height: 56px;
+  padding: 0 100px 0 52px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #ffffff;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.url-input-section.pos-bottom .url-input {
+  height: 48px;
+  font-size: 15px;
+}
+
+.url-input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.url-input:focus {
+  border-color: var(--primary-yellow);
+  box-shadow: 0 0 0 4px var(--primary-yellow-glow);
+  background: rgba(24, 29, 44, 0.95);
+}
+
+.url-input:focus ~ .input-icon {
+  color: var(--primary-yellow);
+}
+
+.url-input::placeholder {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* 인풋 내부 보조 버튼 (지우기 / 붙여넣기) */
+.input-clear-btn {
+  position: absolute;
+  right: 76px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.input-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.paste-btn {
+  position: absolute;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paste-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* 확인 제출 버튼 */
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 28px;
+  background: var(--primary-yellow);
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px -6px rgba(248, 184, 3, 0.45);
+  white-space: nowrap;
+}
+
+.url-input-section.pos-bottom .submit-btn {
+  height: 48px;
+  padding: 0 22px;
+  font-size: 15px;
+}
+
+.submit-btn:hover {
+  background: var(--primary-yellow-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(248, 184, 3, 0.6);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+/* 에러 메시지 */
+.error-msg {
+  color: #f87171;
+  font-size: 13.5px;
+  margin-top: 10px;
+  padding-left: 6px;
+  animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* 토스트 알림 */
+.toast-container {
+  position: fixed;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(18, 22, 33, 0.95);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(248, 184, 3, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast.fade-out {
+  animation: toastOut 0.3s forwards ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+/* ========================================================
+   반응형 모바일 지원
+   ======================================================== */
+@media (max-width: 640px) {
+  .header {
+    padding: 0 20px;
+    height: 70px;
+  }
+  
+  .logo-wrapper img {
+    height: 36px;
+  }
+  
+  .logo-subtext {
+    display: none;
+  }
+
+  .qr-card-container {
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+
+  #qrcodeCanvas {
+    width: 200px;
+    height: 200px;
+  }
+
+  #qrcodeCanvas canvas,
+  #qrcodeCanvas img {
+    width: 200px !important;
+    height: 200px !important;
+  }
+
+  .qr-action-buttons {
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    min-width: 45%;
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .hero-desc {
+    font-size: 13.5px;
+  }
+
+  .input-card {
+    padding: 24px 20px;
+  }
+
+  .url-form {
+    flex-direction: column;
+  }
+
+  .submit-btn {
+    width: 100%;
+    height: 50px;
+  }
+
+  .url-input-section.pos-bottom {
+    top: calc(100% - 130px);
+  }
+
+  .url-input-section.pos-bottom .url-form {
+    flex-direction: row;
+  }
+
+  .url-input-section.pos-bottom .submit-btn {
+    width: auto;
+    height: 48px;
+  }
+}

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL 단축기</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #2c3e50;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #3498db;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #3498db;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result-group {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .result-group.active {
+            display: flex;
+        }
+        .output-box {
+            display: flex;
+            gap: 10px;
+        }
+        input[readonly] {
+            background-color: #f9f9f9;
+            color: #555;
+            flex: 1;
+        }
+        .copy-btn {
+            background-color: #2ecc71;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>URL 단축하기</h2>
+        
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="단축할 URL을 입력하세요 (예: https://example.com)">
+            <button id="shortenBtn" disabled>단축하기</button>
+        </div>
+        
+        <div id="loading" class="loading">단축 중...</div>
+
+        <div class="result-group" id="resultGroup">
+            <label>단축된 URL:</label>
+            <div class="output-box">
+                <input type="text" id="shortUrlOutput" readonly>
+                <button id="copyBtn" class="copy-btn">복사</button>
+            </div>
+        </div>
+
+        <a href="../index.html" class="back-link">메인으로 돌아가기</a>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const shortenBtn = document.getElementById('shortenBtn');
+        const resultGroup = document.getElementById('resultGroup');
+        const shortUrlOutput = document.getElementById('shortUrlOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        const loading = document.getElementById('loading');
+
+        // 입력 필드가 비어 있으면 '단축하기'버튼 비활성화
+        urlInput.addEventListener('input', () => {
+            if (urlInput.value.trim().length > 0) {
+                shortenBtn.disabled = false;
+            } else {
+                shortenBtn.disabled = true;
+            }
+        });
+
+        // 단축하기 버튼 클릭 이벤트
+        shortenBtn.addEventListener('click', async () => {
+            const originalUrl = urlInput.value.trim();
+            if (!originalUrl) return;
+
+            // 간단한 URL 검증
+            let urlToShorten = originalUrl;
+            if (!/^https?:\/\//i.test(urlToShorten)) {
+                urlToShorten = 'http://' + urlToShorten;
+            }
+
+            loading.style.display = 'block';
+            resultGroup.classList.remove('active');
+            shortenBtn.disabled = true;
+
+            // 여러 진짜 URL 단축 API 시도
+            async function shortenUrlWithFallback(targetUrl) {
+                // 1차 시도: spoo.me API (CORS 공식 지원 및 실제 이동 가능한 링크 생성)
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
+                    
+                    const res = await fetch('https://spoo.me/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
+                        },
+                        body: new URLSearchParams({ url: targetUrl }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.short_url) {
+                            // https 로 변환하여 전달
+                            return data.short_url.replace('http://', 'https://');
+                        }
+                    }
+                } catch (e) {
+                    console.warn('spoo.me API 시도 실패:', e);
+                }
+
+                // 2차 시도: TinyURL + CorsProxy
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(targetUrl))}`;
+                    const res = await fetch(proxyUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        const text = await res.text();
+                        if (text && text.startsWith('http')) return text.trim();
+                    }
+                } catch (e) {
+                    console.warn('TinyURL 시도 실패:', e);
+                }
+
+                // 3차 시도: CleanURI + CorsProxy
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
+                    const res = await fetch('https://corsproxy.io/?https://cleanuri.com/api/v1/shorten', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ url: targetUrl }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.result_url) return data.result_url;
+                    }
+                } catch (e) {
+                    console.warn('CleanURI 시도 실패:', e);
+                }
+
+                throw new Error('모든 단축 API 서버 연결 실패');
+            }
+
+            try {
+                const resultUrl = await shortenUrlWithFallback(urlToShorten);
+                shortUrlOutput.value = resultUrl;
+                resultGroup.classList.add('active');
+            } catch (error) {
+                alert('URL 단축 서비스 연결에 실패했습니다. 입력한 URL을 확인하시거나 잠시 후 다시 시도해주세요.');
+            } finally {
+                loading.style.display = 'none';
+                shortenBtn.disabled = false;
+            }
+        });
+
+        // 복사 버튼 클릭 이벤트
+        copyBtn.addEventListener('click', () => {
+            if (shortUrlOutput.value) {
+                shortUrlOutput.select();
+                shortUrlOutput.setSelectionRange(0, 99999); // 모바일 호환성
+
+                try {
+                    navigator.clipboard.writeText(shortUrlOutput.value).then(() => {
+                        alert('복사하였습니다');
+                    }).catch(err => {
+                        // 클립보드 API 실패시 fallback
+                        document.execCommand('copy');
+                        alert('복사하였습니다');
+                    });
+                } catch (err) {
+                    document.execCommand('copy');
+                    alert('복사하였습니다');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

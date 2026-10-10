@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR코드 및 URL단축 서비스</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            margin-bottom: 40px;
+            color: #2c3e50;
+        }
+        .button-container {
+            display: flex;
+            gap: 20px;
+        }
+        .action-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #3498db;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .action-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .action-button.url-btn {
+            background-color: #2ecc71;
+        }
+        .action-button.url-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>웹 도구 모음</h1>
+    <div class="button-container">
+        <a href="./url2qr/index.html" class="action-button">QR코드</a>
+        <a href="./urlShort/index.html" class="action-button url-btn">URL단축</a>
+    </div>
+
+</body>
+</html>
